@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BatchTrack - Live Multi-User Network</title>
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.2);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --safe: #3b82f6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 400px);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        header h1 { margin: 0; font-size: 26px; color: var(--text-main); font-weight: 800; letter-spacing: -0.5px; }
+        header h1 span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+        header p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: 1fr 2fr; }
+        }
+
+        /* Glassmorphism Card Design */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card h2 { margin-top: 0; font-size: 18px; color: var(--text-main); margin-bottom: 20px; font-weight: 600; }
+
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 4px 12px var(--primary-glow);
+            transition: all 0.2s ease;
+        }
+        button:hover { background: #0ca673; transform: translateY(-1px); }
+
+        /* Real-time Dynamic Table Rows */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+
+        /* Elegant Fade-In Transition Elements */
+        tr {
+            animation: fadeIn 0.4s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-safe { background: rgba(59, 130, 246, 0.1); color: var(--safe); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .badge-live { background: rgba(16, 185, 129, 0.15); color: var(--primary); border: 1px solid var(--primary); animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            width: auto;
+            font-size: 12px;
+            border-radius: 6px;
+            box-shadow: none;
+        }
+        .btn-action:hover { background: var(--danger); border-color: var(--danger); transform: none; }
+
+        .metrics-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .metric-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+        .metric-box div:first-child { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .metric-box div:last-child { font-size: 22px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>📦 Batch<span>Track</span></h1>
+            <p>Food Tech Real-Time Distributed Network</p>
+        </div>
+        <div>
+            <span class="badge badge-live">● LIVE CLOUD SYNC</span>
+        </div>
+    </header>
+
+    <div class="metrics-bar">
+        <div class="metric-box"><div>Total Active Batches</div><div id="m-total">0</div></div>
+        <div class="metric-box" style="border-bottom: 2px solid var(--warning);"><div>FIFO Priority</div><div id="m-warning" style="color: var(--warning);">0</div></div>
+        <div class="metric-box" style="border-bottom: 2px solid var(--danger);"><div>Critical State</div><div id="m-danger" style="color: var(--danger);">0</div></div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Log New Stock Batch</h2>
+            <div class="form-group"><label>Material Name</label><input type="text" id="batchName" placeholder="e.g., Sweet Corn Ribs"></div>
+            <div class="form-group"><label>Batch Code ID</label><input type="text" id="batchId" placeholder="e.g., LOT-101"></div>
+            <div class="form-group"><label>Quantity</label><input type="text" id="batchQty" placeholder="e.g., 50 packs"></div>
+            <div class="form-group"><label>Expiration Date</label><input type="date" id="batchExp"></div>
+            <button onclick="saveToCloud()">Broadcast to Network</button>
+        </div>
+
+        <div class="card">
+            <h2>Live Shared Operations Queue</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>Batch ID</th><th>Item Name</th><th>Stock</th><th>Days Left</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="batchTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Public test database configuration explicitly generated for this demo session
+    const firebaseConfig = {
+        projectId: "batchtrack-demo-2026",
+        authDomain: "batchtrack-demo-2026.firebaseapp.com",
+        databaseURL: "https://batchtrack-demo-2026.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const batchCollection = collection(db, "batches");
+
+    document.getElementById('batchExp').valueAsDate = new Date();
+
+    // LISTEN LIVE TO THE CLOUD DATABASE (Updates automatically for all users simultaneously)
+    onSnapshot(batchCollection, (snapshot) => {
+        let inventory = [];
+        snapshot.forEach((doc) => {
+            inventory.push({ docId: doc.id, ...doc.data() });
+        });
+        renderTable(inventory);
+    });
+
+    function renderTable(inventory) {
+        const tbody = document.getElementById('batchTableBody');
+        tbody.innerHTML = '';
+
+        // Auto-sort list by earliest expiry (Strict FIFO Compliance Engine)
+        inventory.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
+
+        let warningCount = 0, dangerCount = 0;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        inventory.forEach((item) => {
+            const exp = new Date(item.expDate);
+            exp.setHours(0,0,0,0);
+            const daysLeft = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+
+            let statusBadge = `<span class="badge badge-safe">STABLE</span>`;
+            if (daysLeft < 0) { statusBadge = `<span class="badge badge-danger">EXPIRED</span>`; dangerCount++; }
+            else if (daysLeft <= 3) { statusBadge = `<span class="badge badge-warning">FIFO NEXT</span>`; warningCount++; }
+
+            const row = `<tr>
+                <td style="font-family: monospace; color: var(--primary); font-weight:600;">${item.id}</td>
+                <td><strong>${item.name}</strong></td>
+                <td>${item.qty}</td>
+                <td>${daysLeft < 0 ? `Expired` : `${daysLeft}d left`}</td>
+                <td>${statusBadge}</td>
+                <td><button class="btn-action" data-id="${item.docId}">Dispense</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('m-total').innerText = inventory.length;
+        document.getElementById('m-warning').innerText = warningCount;
+        document.getElementById('m-danger').innerText = dangerCount;
+
+        // Dynamic event binding for deleting from cloud
+        document.querySelectorAll('.btn-action').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const targetDocId = e.target.getAttribute('data-id');
+                await deleteDoc(doc(db, "batches", targetDocId));
+            });
+        });
+    }
+
+    // BROADCAST RAW NEW INPUTS TO THE NETWORK COLLECTION
+    window.saveToCloud = async function() {
+        const name = document.getElementById('batchName').value.trim();
+        const id = document.getElementById('batchId').value.trim();
+        const qty = document.getElementById('batchQty').value.trim();
+        const expDate = document.getElementById('batchExp').value;
+
+        if (name && id && qty && expDate) {
+            await addDoc(batchCollection, { name, id, qty, expDate });
+            
+            // UI Reset
+            document.getElementById('batchName').value = '';
+            document.getElementById('batchId').value = '';
+            document.getElementById('batchQty').value = '';
+        } else {
+            alert("Please provide valid data parameters.");
+        }
+    }
+</script>
+</body>
+</html>
