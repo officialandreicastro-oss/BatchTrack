@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormuLab - Agri-Food Formulation Wizard</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-hover: #1b5e20;
+            --background: #f8f9fa;
+            --surface: #ffffff;
+            --text: #212529;
+            --border: #dee2e6;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 { margin: 0; font-size: 24px; }
+        header p { margin: 5px 0 0 0; opacity: 0.9; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: 2fr 1fr; }
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--background); padding-bottom: 10px; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background-color: var(--background); }
+
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #bd2130; }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .summary-item:last-child { border: none; }
+        .highlight { font-weight: bold; color: var(--primary); font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🧪 FormuLab</h1>
+        <p>Technopreneurship MVP: Food Formulation, Scaling & Costing Tool</p>
+    </header>
+
+    <div class="grid">
+        <!-- Formulation Setup -->
+        <div class="card">
+            <h2>1. Recipe Ingredients & Base Costs</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="ingName" placeholder="Ingredient Name (e.g., Flour)" style="flex: 2;">
+                <input type="number" id="ingWeight" placeholder="Base Wt (g)" style="flex: 1;">
+                <input type="number" id="ingCost" placeholder="Cost per kg (₱)" style="flex: 1;">
+                <button onclick="addIngredient()">+ Add</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th>Base Wt (g)</th>
+                        <th>% Formula</th>
+                        <th>Scaled Wt (g)</th>
+                        <th>Cost (₱)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ingredientTableBody">
+                    <!-- Dynamic Rows Go Here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Scaling & Processing Parameters -->
+        <div>
+            <div class="card" style="margin-bottom: 20px;">
+                <h2>2. Scaling & Processing</h2>
+                <div class="form-group">
+                    <label for="scaleMultiplier">Batch Multiplier (Scale Factor)</label>
+                    <input type="number" id="scaleMultiplier" value="1" min="0.1" step="0.1" oninput="calculateFormula()">
+                    <small style="color:#6c757d;">e.g., "10" makes ten times the base formulation.</small>
+                </div>
+                <div class="form-group">
+                    <label for="moistureLoss">Estimated Processing Moisture Loss (%)</label>
+                    <input type="number" id="moistureLoss" value="0" min="0" max="100" oninput="calculateFormula()">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>3. Cost & Yield Metrics</h2>
+                <div class="summary-item">
+                    <span>Total Raw Weight:</span>
+                    <span id="totalRawWeight">0.00 g</span>
+                </div>
+                <div class="summary-item">
+                    <span>Final Processed Yield:</span>
+                    <span id="finalYield" class="highlight">0.00 g</span>
+                </div>
+                <div class="summary-item">
+                    <span>Total Batch Cost:</span>
+                    <span id="totalBatchCost">₱0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span>Cost per Gram of Yield:</span>
+                    <span id="costPerGram" class="highlight">₱0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initial dummy data mock to display on load
+    let ingredients = [
+        { name: "Cassava Starch", weight: 500, costPerKg: 65 },
+        { name: "Water", weight: 400, costPerKg: 2 },
+        { name: "Sugar", weight: 100, costPerKg: 85 }
+    ];
+
+    function renderTable() {
+        const tbody = document.getElementById('ingredientTableBody');
+        tbody.innerHTML = '';
+        
+        let totalBaseWeight = ingredients.reduce((sum, ing) => sum + ing.weight, 0);
+        let multiplier = parseFloat(document.getElementById('scaleMultiplier').value) || 1;
+        let totalCost = 0;
+        let totalScaledWeight = 0;
+
+        ingredients.forEach((ing, index) => {
+            let pct = totalBaseWeight > 0 ? ((ing.weight / totalBaseWeight) * 100).toFixed(2) : 0;
+            let scaledWeight = ing.weight * multiplier;
+            // Cost calculation: (weight in grams / 1000) * cost per kg
+            let cost = (scaledWeight / 1000) * ing.costPerKg;
+            
+            totalCost += cost;
+            totalScaledWeight += scaledWeight;
+
+            const row = `<tr>
+                <td>${ing.name}</td>
+                <td>${ing.weight}g</td>
+                <td>${pct}%</td>
+                <td><strong>${scaledWeight.toFixed(1)}g</strong></td>
+                <td>₱${cost.toFixed(2)}</td>
+                <td><button class="btn-danger" onclick="deleteIngredient(${index})">X</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        // Update operational cards
+        let moistureLossPct = parseFloat(document.getElementById('moistureLoss').value) || 0;
+        let finalYieldWeight = totalScaledWeight * (1 - (moistureLossPct / 100));
+        let costPerG = finalYieldWeight > 0 ? (totalCost / finalYieldWeight) : 0;
+
+        document.getElementById('totalRawWeight').innerText = `${totalScaledWeight.toFixed(2)} g`;
+        document.getElementById('finalYield').innerText = `${finalYieldWeight.toFixed(2)} g`;
+        document.getElementById('totalBatchCost').innerText = `₱${totalCost.toFixed(2)}`;
+        document.getElementById('costPerGram').innerText = `₱${costPerG.toFixed(4)}`;
+    }
+
+    function addIngredient() {
+        const name = document.getElementById('ingName').value.trim();
+        const weight = parseFloat(document.getElementById('ingWeight').value);
+        const cost = parseFloat(document.getElementById('ingCost').value);
+
+        if(name && weight > 0 && cost >= 0) {
+            ingredients.push({ name: name, weight: weight, costPerKg: cost });
+            document.getElementById('ingName').value = '';
+            document.getElementById('ingWeight').value = '';
+            document.getElementById('ingCost').value = '';
+            renderTable();
+        } else {
+            alert("Please complete all fields with positive numerical values.");
+        }
+    }
+
+    function deleteIngredient(index) {
+        ingredients.splice(index, 1);
+        renderTable();
+    }
+
+    function calculateFormula() {
+        renderTable();
+    }
+
+    // App Initialization
+    window.onload = renderTable;
+</script>
+</body>
+</html>
